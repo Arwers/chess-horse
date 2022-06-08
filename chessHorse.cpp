@@ -1,27 +1,69 @@
 ﻿#include <iostream>
+
+//zdefiniowac stala CHESSBOARD_SIZE - wymiar szchownicy ( < 8 ) 7 lub 6 lub 5
 #define CHESSBOARD_SIZE 7
+
+//zdefiniowac typ strukt Point  (skldowe x i y)
 typedef struct Points {
   int x;
   int y;
 } Point;
 
+// zdefiniowac typ wyliczeniowy: od FIRST to EIGHT
 typedef enum { FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH };
 
 int move( int** pChessBoard, int nDim, int move, int x, int y,
           int* px, int* py, Point* pHorseMoves );
-
 int root( int** pChessBoard, int nDim, int moveNo, int x, int y, Point* pHorseMoves );
-
 int** createChessboard( int nDim );
-
-void freeChessboard( int*** pChessBoard );
-
+void freeChessboard( int*** pChessBoard, int nDim ); // !
 void printChessBoard( int** pChessBoard, int nDim );
 
+/*
+  SCHEMAT PLIKU .TXT : 
+  wymiar szach.
+  X
+  Y
+*/
 int main( int argc, char* argv[] ) {
-  int** p = createChessboard( 7 );
-  printChessBoard( p, 7 );
-  freeChessboard( &p );
+  // sprawdzenie czy poprawne
+  if( argc != 4 ) {
+    printf( "Usage %s tab_size\n", argv[ 0 ] );
+    return 0;
+  }
+
+  // odczytujemy wymiar i sprawdzamy poprawność
+  int nDim = atoi( argv[ 1 ] );
+  if( nDim < 0 || nDim > CHESSBOARD_SIZE ) printf( "niewłaściwy rozmiar szachownicy" );
+  
+  //odczytac ustawienie poczatkowe x0, y0 konika szachowego z parametrow main()
+  int x = atoi( argv[ 2 ] );
+  int y = atoi( argv[ 3 ] );
+  
+  // sprawdzamy poprawność ustawienia 
+  if( x<0 && x >= nDim && y < 0 && y >= nDim ) {
+    printf( "niewłaściwa pozycja startowa skoczka" );
+    return 0;
+  }
+  
+  //Wykreowac dynamicznie tablice kwadratowa o rozmiarze CHESSBOARD_SIZE
+  int** pTab2D = NULL;
+  pTab2D = createChessboard( nDim );
+  
+  // zdefiniowac tablica do pamietania mozliwych offestow ruchow
+  Point HorseMove[ 8 ] = { ( -2,1 ), ( -1,2 ), ( 1,-2 ),( 2, -1 ), ( 2, 1 ), ( 1, 2 ) };
+  
+  // Jezeli nie znaleziono drogi od (x0,y0) - wypisac
+  // "Nie ma mozliwosci odwiedzic jednokrotnie ka�dego pola!!\n\n";
+  if( !root( pTab2D, nDim, 1, x, y, HorseMove ) ) printf( "Nie ma mozliwosci odwiedzic jednokrotnie kazdego pola!!\n\n" );
+  
+  // jesli ok to wypisac szachownice z numerami kolejnych krokow
+  printChessBoard( pTab2D, nDim );
+
+  // zwolnić pamięć
+  freeChessboard( &pTab2D, nDim );
+
+  return 0;
 }
 
 int** createChessboard( int nDim ) {
@@ -58,11 +100,11 @@ void printChessBoard( int** pChessBoard, int nDim ) {
   }
 }
 
-void freeChessboard( int*** pChessBoard ) {
-  
+void freeChessboard( int*** pChessBoard, int nDim ) { // !
+
   int** pRows = *pChessBoard;
   
-  for( int i = 0; i < CHESSBOARD_SIZE; i++ ) {
+  for( int i = 0; i < nDim; i++ ) {
     free( *pRows );
     pRows++;
   }
