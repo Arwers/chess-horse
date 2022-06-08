@@ -1,13 +1,14 @@
 ﻿#include <iostream>
-
+#include <stdlib.h>
+#include <stdio.h>
 //zdefiniowac stala CHESSBOARD_SIZE - wymiar szchownicy ( < 8 ) 7 lub 6 lub 5
 #define CHESSBOARD_SIZE 7
 
 //zdefiniowac typ strukt Point  (skldowe x i y)
-typedef struct Points {
+struct Point {
   int x;
   int y;
-} Point;
+};
 
 // zdefiniowac typ wyliczeniowy: od FIRST to EIGHT
 typedef enum { FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH };
@@ -16,15 +17,16 @@ int move( int** pChessBoard, int nDim, int move, int x, int y,
           int* px, int* py, Point* pHorseMoves );
 int root( int** pChessBoard, int nDim, int moveNo, int x, int y, Point* pHorseMoves );
 int** createChessboard( int nDim );
-void freeChessboard( int*** pChessBoard, int nDim ); // !
+void freeChessboard( int*** pChessBoard, int nDim );
 void printChessBoard( int** pChessBoard, int nDim );
 
 /*
-  SCHEMAT PLIKU .TXT : 
+  SCHEMAT WEJSCIA : 
   wymiar szach.
   X
   Y
 */
+
 int main( int argc, char* argv[] ) {
   // sprawdzenie czy poprawne
   if( argc != 4 ) {
@@ -47,15 +49,16 @@ int main( int argc, char* argv[] ) {
   }
   
   //Wykreowac dynamicznie tablice kwadratowa o rozmiarze CHESSBOARD_SIZE
-  int** pTab2D = NULL;
-  pTab2D = createChessboard( nDim );
+  int** pTab2D = createChessboard( nDim );
   
   // zdefiniowac tablica do pamietania mozliwych offestow ruchow
-  Point HorseMove[ 8 ] = { ( -2,1 ), ( -1,2 ), ( 1,-2 ),( 2, -1 ), ( 2, 1 ), ( 1, 2 ) };
-  
+  Point HorseMove[ 8 ] = { { -2, -1 }, { -1, -2 }, { 1, -2 }, { 2, -1 }, { 2, 1 }, { 1, 2 }, { -1, 2 }, { -2, 1 } };
   // Jezeli nie znaleziono drogi od (x0,y0) - wypisac
   // "Nie ma mozliwosci odwiedzic jednokrotnie ka�dego pola!!\n\n";
-  if( !root( pTab2D, nDim, 1, x, y, HorseMove ) ) printf( "Nie ma mozliwosci odwiedzic jednokrotnie kazdego pola!!\n\n" );
+  if( !root( pTab2D, nDim, 1, x, y, HorseMove ) ) {
+    printf( "Nie ma mozliwosci odwiedzic jednokrotnie kazdego pola!!\n\n" );
+    return 0;
+  }
   
   // jesli ok to wypisac szachownice z numerami kolejnych krokow
   printChessBoard( pTab2D, nDim );
@@ -89,18 +92,20 @@ int** createChessboard( int nDim ) {
 
 void printChessBoard( int** pChessBoard, int nDim ) {
 
+  // iteracja po rzędach
   for( int row = 0; row < nDim; row++ ) {
     int* pRows = *pChessBoard;
-    
+    // iteracja po elementach
     for( int element = 0; element < nDim; element++ ) {
-      if( element==( nDim-1 ) ) printf( "%d\n", *pRows );
+      if( element==( nDim-1 ) ) printf( "%d\n", *pRows ); // koniec rzędu = nowa linia
       else printf( "%d ", *pRows );
       pRows++;
     }
+    pChessBoard++;
   }
 }
 
-void freeChessboard( int*** pChessBoard, int nDim ) { // !
+void freeChessboard( int*** pChessBoard, int nDim ) {
 
   int** pRows = *pChessBoard;
   
@@ -131,26 +136,22 @@ int root( int** pChessBoard, int nDim, int moveNo, int x, int y, Point* pHorseMo
   // wstawic kolejny numer ruchu
   pChessBoard[ x ][ y ] = moveNo;
   // jesli koniec to zwracamy 1  (ilosc ruchow porownac z iloscia pozycji na szachownicy)
-  if( moveNo<=nDim*nDim ) return 1;
+  if( moveNo >= nDim*nDim ) return 1;
   else {
     // zdefiniowac nowe pozycje x i y
     int xNew = 0;
     int yNew = 0;
     // sprawadzic wszystkie mozliwosci ruchu (petla od FIRST do EIGHTH)
-    for( int i = FIRST; i<=EIGHTH; i++ ) {
+    for( int i = FIRST; i <= EIGHTH; i++ ) {
       // jesli ruch do nowej poycji mozliwy
-      if( move( pChessBoard, CHESSBOARD_SIZE, i, x, y, &xNew, &yNew, pHorseMoves ) ) {
+      if( move( pChessBoard, nDim, i, x, y, &xNew, &yNew, pHorseMoves ) ) {
         // to rekurencyjnie wykonac ruch moveNo+1
         // jesli zwrocono 1 z rekurencji to zwrocic 1;
-        if( root( pChessBoard, CHESSBOARD_SIZE, moveNo+1, xNew, yNew, pHorseMoves ) ) return 1;
+        if( root( pChessBoard, nDim, moveNo+1, xNew, yNew, pHorseMoves ) ) return 1;
       }
     }
+    // jezeli wracamy to ustawiamy w pChessBoard[x][y] na 0 bo ten ruch byl zly
+    pChessBoard[ x ][ y ] = 0;
+    return 0;
   }
-  // jezeli wracamy to ustawiamy w pChessBoard[x][y] na 0 bo ten ruch byl zly
-  pChessBoard[ x ][ y ] = 0;
-  return 0;
 }
-
-
-
-
